@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no" />
+	<!-- 设置苹果手机可以把web页面保存为桌面应用
+	<meta name="apple-touch-fullscreen" content="yes">
+	设置apple的状态栏颜色
+	<meta name="apple-mobile-web-app-status-bar-style" content="black"> -->
+	<title>图片WebApp</title>
+	<style type="text/css">
+		html,body,#app,#app ul,#app li{
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+		}
+		body{
+			margin:0;
+			padding: 0;
+			background-color: #000;
+		}
+		#app ul,#app li{
+			list-style: none;
+			padding: 0;
+			margin: 0; 
+		}
+		/*使图片垂直居中显示*/
+		#app li{
+			display: -webkit-flex;
+			align-items: center;
+			position: absolute;
+		}
+		#app img{
+			width: 100%;
+		}
+	</style>
+</head>
+<body>
+	<!-- 外层容器 -->
+	<div id="app">
+		<!-- 	window.innerWidth可以获取视口的宽度 -->
+		<!-- 在这放ul图片 -->
+	</div>
+	
+	<script type="text/javascript">
+		var list=[{
+			img:"imgs/1.jpg"
+		},
+		{
+			img:"imgs/2.jpg"
+		},
+		{
+			img:"imgs/3.jpg"
+		},
+		{
+			img:"imgs/4.jpg"
+		},
+		{
+			img:"imgs/5.jpg"
+		},
+		{
+			img:"imgs/6.jpg"
+		}];
+		//1.遍历数据，渲染数据
+		var app=document.getElementById("app");
+
+		imgsApp(app,list);
+
+		function imgsApp(app,list){
+			//console.log(app);
+			var ul=document.createElement("ul");
+			var len=list.length;
+			var screenW=window.innerWidth;
+			//console.log(len);
+			for(var i=0;i<len;i++){
+				var li=document.createElement("li");
+				var imgSrc=list[i].img;
+
+				//给img设置索引
+				li.innerHTML="<img src='"+imgSrc+"' index="+i+">";
+				li.style.webkitTransform = "translateX("+i*screenW+"px)";
+				ul.appendChild(li);
+
+			}
+			app.appendChild(ul);
+			//console.log(app);
+			
+			//把this赋给一个变量，改变作用域
+			var self=this;	
+
+			//对应函数,要先声明在绑定dom，不然不能起作用
+			var TStart=function(e){
+				//获取touch的参数
+				var touchList=e.touches;
+				var touchLocal=touchList[0];
+				//设置时间，用于当用户快速滑动的时候进行换页处理
+				self.startTime=new Date()*1;
+				//console.log(touchLocal);
+				//获取指尖相对页面的x值，不能用screenX因为这个是相对于视口的
+				self.startX=touchLocal.pageX;
+				//使下一次的touch事件不会和本次的touch事件冲突
+				self.offsetX=0;
+
+				//点击时获取li的索引e.touches.target用于获取点击的元素
+				//用于接下来的滑动判断是哪张图片
+		 		self.index=touchLocal.target.getAttribute("index")*1;
+
+		 		//console.log(touchLocal.target);
+			};
+			var li=ul.getElementsByTagName("li");
+			var l=li.length;
+			//console.log(li);
+			
+			var TMove=function(e){
+				//阻止浏览器的默认行为(兼容的操作)
+				e.preventDefault();
+				// 获取用户滑动的方向以及距离
+				self.offsetX=e.touches[0].pageX-self.startX;
+				//console.log(self.offsetX);
+
+				//获取本张图片和下一张图片的索引
+				//问题：移动的时候要获取本身
+				//
+				var p=self.index;//当前页的索引
+				//console.log(p);
+				//去掉过渡动画
+				for(var i=0;i<l;i++){
+					li[i].style.webkitTransition="none";
+				}
+				//当前页的x值为0
+				//当前也得下一页x值为1*screenX
+				
+				if(p>0&&p<l-1){
+					for(var i=-1;i<2;i++,p++){
+						li[p-1].style.webkitTransform ="translateX("+(i*screenW+self.offsetX)+"px)";
+
+					}
+					
+				}else if(p==0){
+					for(var i=0;i<2;i++,p++){
+						li[p].style.webkitTransform ="translateX("+(i*screenW+self.offsetX)+"px)";
+					}
+				 }else if(p==l-1){
+					for(var i=0;i<2;i++,p--){
+						li[p].style.webkitTransform ="translateX("+(-i*screenW+self.offsetX)+"px)";
+					}
+				}
+				
+			};
+			var TEnd=function(e){
+				//判断松开手之后留在本张还是下一张还是上一张
+				//设置边界值，用于判断显示上一张还是下一张
+				//设置为屏幕的1/6
+				var border=screenW/6;
+				var offsetX=self.offsetX;
+				var startTime=self.startTime;
+				var endTime=new Date()*1;
+				var index=self.index;
+
+				//console.log(offsetX);
+				//console.log(border);
+				//console.log(index);
+				if(endTime-startTime>300){//慢操作时
+					if(offsetX>=border){
+						//进入上一页
+						go(index-1);
+					}else if(offsetX<-border){
+						//进入下一页
+						if(index==l-1){
+							go(l-1);
+						}else{
+							go(index+1);
+						}
+						
+
+					}else{
+						//留在本页
+						go(index);
+					}
+				}else{
+					//快操作
+					//判断方向，直接换页
+					if(offsetX>50){
+						//上一页
+						go(index-1);
+					}else if(offsetX<50){
+						//下一页
+						if(index==l-1){
+							go(l-1);
+						}else{
+							go(index+1);
+						}
+					}else{
+						//本页
+						go(index);
+					}
+				}
+								
+			}
+			
+			//go(self.offsetX,screenW,5);
+			function go(n){
+				
+				//console.log(n);
+				if(n>l){
+					n=l-1;
+				}else if(n<0){
+					n=0;
+				}
+				//offsetX表示手指的偏移量，screenW表示屏幕宽度，n表示显示第几张图片
+				//第一张图片的偏移=n*screenW+offsetX
+				for(var i=0;i<l;i++){
+					if(li[i]){
+						li[i].style.webkitTransform ="translateX("+((i-n)*screenW)+"px)";
+						li[i].style.webkitTransition="all 0.4s ease-out";
+					}
+					
+				}
+			}
+
+			//绑定dom事件
+			ul.addEventListener('touchstart',TStart);
+			ul.addEventListener('touchmove',TMove);
+			ul.addEventListener('touchend',TEnd);
+
+		}
+
+
+	</script>
+</body>
+</html>

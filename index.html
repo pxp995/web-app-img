@@ -27,8 +27,13 @@
 		/*使图片垂直居中显示*/
 		#app li{
 			display: -webkit-flex;
+			display: -moz-flex;
+			display: flex;
 			align-items: center;
 			position: absolute;
+			-webkit-backface-visibility: hidden;/*避免在动画切换时出现闪动*/
+			-moz-backface-visibility: hidden;
+			backface-visibility: hidden;
 		}
 		#app img{
 			width: 100%;
@@ -43,6 +48,7 @@
 	</div>
 	
 	<script type="text/javascript">
+	//魅族自带浏览器宽度显示有问题！！，2个和一个的时候没问题，3个及以上显示错乱
 		var list=[{
 			img:"imgs/1.jpg"
 		},
@@ -79,6 +85,7 @@
 				//给img设置索引
 				li.innerHTML="<img src='"+imgSrc+"' index="+i+">";
 				li.style.webkitTransform = "translateX("+i*screenW+"px)";
+				//li.style.webkitTransform = "translateX("+i*screenW+"px)";
 				ul.appendChild(li);
 
 			}
@@ -123,7 +130,7 @@
 				//
 				var p=self.index;//当前页的索引
 				//console.log(p);
-				//去掉过渡动画
+				//去掉过渡动画,滑动时
 				for(var i=0;i<l;i++){
 					li[i].style.webkitTransition="none";
 				}
@@ -139,6 +146,7 @@
 				}else if(p==0){
 					for(var i=0;i<2;i++,p++){
 						li[p].style.webkitTransform ="translateX("+(i*screenW+self.offsetX)+"px)";
+						//li[p].style.mozTransform ="translateX("+(i*screenW+self.offsetX)+"px)";
 					}
 				 }else if(p==l-1){
 					for(var i=0;i<2;i++,p--){
@@ -212,7 +220,7 @@
 				for(var i=0;i<l;i++){
 					if(li[i]){
 						li[i].style.webkitTransform ="translateX("+((i-n)*screenW)+"px)";
-						li[i].style.webkitTransition="all 0.4s ease-out";
+						li[i].style.webkitTransition="all .4s ease-out";
 					}
 					
 				}
